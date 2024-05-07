@@ -4,21 +4,45 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Collections.Specialized.BitVector32;
 
 namespace KG_6
 {
     public partial class Form1 : Form
     {
         Point mid;
+        float pictureBoxWidth;
+        float pictureBoxHeight;
+        Graphics g;
+        Pen axisPen = new Pen(Color.Black, 2);
+        Pen gridPen = new Pen(Color.Black, 0.5f);
+        Font Fon = new Font("Arial", 9, FontStyle.Regular);
+        Brush brush = new SolidBrush(Color.Black);
+        Brush fillArea = new SolidBrush(Color.Red);
+        Brush noFillArea = new SolidBrush(Color.Gray);
+        float divX;
+        float divY;
+        const int countX = 20;
+        const int countY = 20;
+        float centerX, centerY;
+
         public Form1()
         {
             InitializeComponent();
-            mainFunction();
+            g = pictureBox1.CreateGraphics();
+            pictureBoxWidth = pictureBox1.Width;
+            pictureBoxHeight = pictureBox1.Height;
+            divX = pictureBoxWidth / countX;
+            divY = pictureBoxHeight / countY;
+            centerX = pictureBoxWidth / 2;
+            centerY = pictureBoxHeight / 2;
 
         }
 
@@ -223,24 +247,88 @@ namespace KG_6
             List<Point> rightHull = divide(right);
             return merger(leftHull, rightHull);
         }
+        private Point[] Convert(List<Point> point)
+        {
+            List<Point> result = new List<Point>();
+            for (int i = 0; i < point.Count; i++)
+            {
+                result.Add(Convert(point[i]));
+            }
+            return result.ToArray();
+        }
+        private Point Convert(Point point)
+        {
+            return new Point((int)(divX + (point.X * divX)), (int)((pictureBoxHeight - divY) - point.Y * divY));
+        }
         private void mainFunction()
         {
-            List<Point> points = new List<Point>();
-            points.Add(new Point(0, 0));
-            points.Add(new Point(1, -4));
-            points.Add(new Point(-1, -5));
-            points.Add(new Point(-5, -3));
-            points.Add(new Point(-3, -1));
-            points.Add(new Point(-1, -3));
-            points.Add(new Point(-2, -2));
-            points.Add(new Point(-1, -1));
-            points.Add(new Point(-2, -1));
-            points.Add(new Point(-1, 1));
+            List<Point> points = inputFile();
+            Point[]right = Convert(points);
             int n = points.Count;
+            for (int i = 0; i < points.Count; i++)
+            {
+                g.FillEllipse(brush,right[i].X, right[i].Y,10,10);
+            }
             points = points.OrderBy(p => p.X).ToList();
             List<Point> pointEnd = divide(points);
+            Point[] coorPoint = Convert(pointEnd);
+            g.DrawLines(gridPen, coorPoint);
+            g.DrawLine(gridPen, coorPoint[0], coorPoint[(coorPoint.Count() - 1)]);
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            drawAxis();
+            mainFunction();
+        }
+
+        private void drawAxis()
+        {
+            g.Clear(Color.White);
+            PointF axisXStart = new PointF(divX, pictureBoxHeight - divY);
+            PointF axisXEnd = new PointF(pictureBoxWidth, pictureBoxHeight - divY);
+            PointF axisYStart = new PointF(divX, 0);
+            PointF axisYEnd = new PointF(divX, pictureBoxHeight - divY);
+            g.DrawLine(axisPen, axisXStart, axisXEnd);
+            g.DrawLine(axisPen, axisYStart, axisYEnd);
+            for (int i = 1; i <= countY; i++)
+            {
+                g.DrawString((i).ToString(), Fon, brush, divX - 17, pictureBoxHeight + divY * -i - divY);
+            }
+            for (int i = 1; i <= countX; i++)
+            {
+                g.DrawString(i.ToString(), Fon, brush, divX * i + 5, pictureBoxHeight - 15);
+            }
+        }
+        private List<Point> inputFile()
+        {
+            string line;
+            List<Point> points = new List<Point>();
+            try
+            {
+                //Pass the file path and file name to the StreamReader constructor
+                StreamReader sr = new StreamReader("input.txt");
+                //Read the first line of text
+                line = sr.ReadLine();
+
+                //Continue to read until you reach end of file
+                while (line != null)
+                {
+                    string[] coordinates = line.Split(' ');
+                    int x = int.Parse(coordinates[0]);
+                    int y = int.Parse(coordinates[1]);
+                    points.Add(new Point(x, y));
+                    line = sr.ReadLine();
+                }
+                sr.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception: " + e.Message);
+            }
+            return points;
+
+        }
 
     }
 }
