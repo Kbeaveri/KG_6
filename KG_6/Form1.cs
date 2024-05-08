@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Collections.Specialized.BitVector32;
@@ -190,7 +191,7 @@ namespace KG_6
             inda = ia;
             indb = ib;
             done = false;
-            int g = 0;
+            //int g = 0;
             while (!done)//finding the lower tangent
             {
                 done = true;
@@ -223,6 +224,11 @@ namespace KG_6
             {
                 ind = (ind + 1) % n2;
                 ret.Add(b[ind]);
+            }
+            for (int i = 0;i < ret.Count-1; i++)
+            {
+                g.DrawLine(gridPen, Convert(ret[i]), Convert(ret[i+1]));
+                Thread.Sleep(200);
             }
             return ret;
 
